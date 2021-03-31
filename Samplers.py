@@ -47,28 +47,29 @@ class RandomWalkMetropolisHastings(nn.Module):
     
   @torch.no_grad()
   def step(self):
-    xcand = self._sample_x_given_y(self.chains).detach_() #propose a candidate move 
+    xcand = self._sample_x_given_y(self.chains).detach_()                                            #propose a candidate move 
     
-    log_u = self.uniform.uniform_().log().detach_() #calculate uniform log prob (for accept-reject step)
-    log_a = self._log_pdf(xcand).detach_() - self._log_pdf(self.chains).detach_() #calculate log acceptance probability 
+    log_u = self.uniform.uniform_().log().detach_()                                                  #calculate uniform log prob (for accept-reject step)
+    log_a = self._log_pdf(xcand).detach_() - self._log_pdf(self.chains).detach_()                    #calculate log acceptance probability 
     
-    condition = torch.lt(log_u, log_a).int().detach_() #if log_u < log_a accept the move (condition=1) else 0
+    condition = torch.lt(log_u, log_a).int().detach_()                                               #if log_u < log_a accept the move (condition=1 else 0)
     self.acceptance += condition
     
-    condition = condition.unsqueeze(1).repeat(1, self.dim).detach_() #reshape condition vector to match walker tensor
+    condition = condition.unsqueeze(1).repeat(1, self.dim).detach_()                                 #reshape condition vector to match walker tensor
     
-    self.chains = xcand.mul_(condition).detach_() + self.chains.mul_(1-condition).detach_() #update the accepted moves, else keep the same value
+    self.chains = xcand.mul_(condition).detach_() + self.chains.mul_(1-condition).detach_()          #update the accepted moves, else keep the same value
     
   @torch.no_grad()
   def forward(self, nsamples, burn_in, thinning):
     values = torch.zeros(self.nwalkers, nsamples, self.dim, device=self.device, requires_grad=False) #tensor to store samples
-    self.acceptance.zero_() #zero the acceptance tensor, so we don't count acceptance from previous call
-    total_samples = thinning*(nsamples+1) + burn_in #total number of samples
+    self.acceptance.zero_()                                                                          #zero the acceptance tensor,
+                                                                                                     #so we don't count acceptance from previous call
+    total_samples = thinning*(nsamples+1) + burn_in                                                  #total number of samples
     
-    for i in range(total_samples): #cycle through the samples 
+    for i in range(total_samples):                                                                   #cycle through the samples 
       self.step() #step the chain
       if(i>burn_in and i%thinning==0): 
         idx=(i-burn_in)//thinning - 1
-        values[:,idx,:] = self.chains.detach_() #copy current chain value into the samples tensor
-    return values.detach_(), (100.0*self.acceptance.detach_()/total_samples) #return values (and acceptance rates)
+        values[:,idx,:] = self.chains.detach_()                                                      #copy current chain value into the samples tensor
+    return values.detach_(), (100.0*self.acceptance.detach_()/total_samples)                         #return values (and acceptance rates)
 
