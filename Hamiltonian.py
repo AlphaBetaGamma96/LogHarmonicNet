@@ -73,7 +73,7 @@ class HarmonicOscillatorWithInteraction1D(nn.Module):
     self.hbar = 197 #MeV fm
     self.hbar_omega = 40*self.network.num_input**(-1/3) #MeV
     self.omega = self.hbar_omega/self.hbar #fm^-1
-    self.V = 40.66*(self.network.num_input**(-1/3))*V0
+    self.V = 40.66*(self.network.num_input**(-1/6))*V0
     self.sigma = (1.0165*self.network.num_input**(1/6))*sigma0
         
     self.kinetic_const = -(self.hbar**2)/(2*self.mass) #MeV fm^2
